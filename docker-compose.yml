@@ -1,0 +1,58 @@
+version: '3'
+
+services:
+  lb:
+    image: haproxy
+    ports:
+        - "8080:8080"
+    volumes:
+        - ./haproxy:/usr/local/etc/haproxy
+    networks:
+        - flx_network
+    depends_on:
+        - server-john
+        - server-paul
+    restart: unless-stopped
+  server-john:
+    build: .
+    volumes:
+      - .:/usr/src/app
+      - /usr/src/app/node_modules
+    environment:
+      - APP_ID=1111
+      - REDIS_HOST=flexwhere_sockets_redis
+    ports:
+      - "3000:3000"
+    depends_on: 
+      - redis
+    networks:
+      - flx_network
+    command: npm start
+    restart: unless-stopped
+  server-paul:
+    build: .
+    volumes:
+      - .:/usr/src/app
+      - /usr/src/app/node_modules
+    environment:
+      - APP_ID=2222
+      - REDIS_HOST=flexwhere_sockets_redis
+      - PORT=3000
+    ports:
+      - "3001:3000"
+    depends_on: 
+      - redis
+    networks:
+      - flx_network   
+    command: npm start
+    restart: unless-stopped
+  redis:
+    image: redis
+    container_name: flexwhere_sockets_redis
+    volumes:
+      - ./redis_data:/data
+    networks:
+      - flx_network
+networks:
+  flx_network:
+      driver: bridge
